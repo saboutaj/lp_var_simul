@@ -31,81 +31,84 @@ connected to 25 workers.
 [Warning: Variable names were modified to make them valid MATLAB identifiers.
 The original names are saved in the VariableDescriptions property.] 
 > In LS (line 11)
-> In LS (line 11)
-Monte Carlo:
-    70
-
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  6.431317e-13.
 Monte Carlo:
     10
 
 Monte Carlo:
     30
 
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.270669e-13.
 Monte Carlo:
     50
 
+Monte Carlo:
+    70
+
 > In LS (line 11)
 > In LS (line 11)
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.843212e-13.
 Monte Carlo:
     90
 
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.907341e-13.
 > In LS (line 11)
 > In LS (line 11)
-> In LS (line 11)
-> In LS (line 11)
-Monte Carlo:
-    40
-
-Monte Carlo:
-    20
-
-Monte Carlo:
-    60
-
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.154549e-13.
 Monte Carlo:
    110
 
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.088413e-13.
-> In LS (line 11)
-> In LS (line 11)
+Warning: Rank deficient, rank = 72, tol =  5.723702e-13.
 > In LS (line 11)
 Monte Carlo:
-    80
+    40
 
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.223436e-13.
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.301024e-13.
+Monte Carlo:
+    60
+
+Monte Carlo:
+    20
+
+> In LS (line 11)
+> In LS (line 11)
 Monte Carlo:
    130
 
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.939450e-13.
+Warning: Rank deficient, rank = 72, tol =  6.216904e-13.
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.907341e-13.
+Warning: Rank deficient, rank = 72, tol =  6.029090e-13.
+Monte Carlo:
+    80
+
+> In LS (line 11)
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.723702e-13.
+> In LS (line 11)
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.723702e-13.
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  6.607626e-13.
+Monte Carlo:
+   150
+
+> In LS (line 11)
 > In LS (line 11)
 Monte Carlo:
    100
@@ -113,80 +116,77 @@ Monte Carlo:
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.557930e-13.
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.907341e-13.
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.907341e-13.
-Monte Carlo:
-   150
-
+Warning: Rank deficient, rank = 72, tol =  6.053316e-13.
 Monte Carlo:
    160
 
 > In LS (line 11)
-Monte Carlo:
-   140
-
-Monte Carlo:
-   170
-
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.723702e-13.
+> In LS (line 11)
+> In LS (line 11)
 > In LS (line 11)
 > In LS (line 11)
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.416999e-13.
+Warning: Rank deficient, rank = 72, tol =  6.161569e-13.
+Monte Carlo:
+   170
+
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.723702e-13.
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  6.001591e-13.
+Monte Carlo:
+   140
+
 Monte Carlo:
    180
 
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  8.570308e-12.
+Warning: Rank deficient, rank = 72, tol =  7.911350e-12.
+> In LS (line 11)
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  6.077333e-13.
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  6.118067e-13.
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.810478e-13.
+  In SVAR_est (line 45)
+  In parallel_function>make_general_channel/channel_general (line 917)
+  In remoteParallelFunction (line 41)
+Warning: Rank deficient, rank = 72, tol =  5.993331e-13.
 Monte Carlo:
    120
 
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.003382e-13.
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.907341e-13.
-> In LS (line 11)
-> In LS (line 11)
-> In LS (line 11)
-Monte Carlo:
-   190
-
-> In LS (line 11)
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.088438e-13.
 Monte Carlo:
    200
 
+> In LS (line 11)
   In SVAR_est (line 45)
   In parallel_function>make_general_channel/channel_general (line 917)
   In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  6.336275e-13.
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.915756e-13.
-  In SVAR_est (line 45)
-  In parallel_function>make_general_channel/channel_general (line 917)
-  In remoteParallelFunction (line 41)
-Warning: Rank deficient, rank = 48, tol =  5.907341e-13.
+Warning: Rank deficient, rank = 72, tol =  5.723702e-13.
+Monte Carlo:
+   190
+
 Parallel pool using the 'local' profile is shutting down.
-Elapsed time is 871.537856 seconds.
+Elapsed time is 962.577844 seconds.
   message with properties:
 
     Identifier: 'MATLAB:connector:connector:ConnectorNotRunning'
