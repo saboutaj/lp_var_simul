@@ -23,7 +23,7 @@ DF_model.IV.IV_strength_calibrate = 0; % use calibrated IV strength
 
 settings.specifications.manual_var_select     = [1 142; 1 97]; % manually select specifications
 settings.specifications.random_select         = 1; % randomly select?
-settings.specifications.random_n_spec         = 1000; % number of random specifications
+settings.specifications.random_n_spec         = 20; % number of random specifications
 settings.specifications.random_n_var          = 5; % number of variables in each random specification
 settings.specifications.random_category_range = [1 20; 21 31; 32 76; 77 86; 87 94; 95 131; 132 141;...
                                                  142 159; 160 171; 172 180; 181 207];
@@ -52,7 +52,7 @@ settings.est.VAR_infinity_truncate = 50;
 
 % number of Monte Carlo draws
 
-settings.simul.n_MC    = 5000; % number of Monte Carlo reps
+settings.simul.n_MC    = 200; % number of Monte Carlo reps
 settings.simul.seed    = (1:settings.simul.n_MC)*10 + randi([0,9],1,settings.simul.n_MC); % random seed
 
 % simulation details
@@ -65,7 +65,7 @@ settings.simul.T_burn = 100; % burn-in
 
 % choose estimand
 
-settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_penalize'}; % choose estimands (may be expanded later)
+settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_penalize','var_avg'}; % choose estimands (may be expanded later)
 
 % lag specification
 
