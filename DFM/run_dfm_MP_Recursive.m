@@ -29,8 +29,8 @@ save_folder = '/tigress/dakel/8'; % use ' ' or '/tigress/dakel'
 
 %% DECIDE WHICH EXPERIMENT TO RUN
 
-dgp_type = 'G'; % 'MP'; % Either 'G' or 'MP'
-estimand_type = 'ObsShock'; % 'Recursive'; 'IV'; % Either 'ObsShock', 'Recursive', or 'IV'
+dgp_type = 'MP'; % 'G'; % Either 'G' or 'MP'
+estimand_type = 'Recursive'; % 'ObsShock'; 'IV'; % Either 'ObsShock', 'Recursive', or 'IV'
 
 
 %% SETTINGS
