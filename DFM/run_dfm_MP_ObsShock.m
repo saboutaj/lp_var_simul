@@ -24,7 +24,7 @@ end
 clear num_workers;
 
 % Storage folder for results
-save_folder = '/tigress/dakel/8'; % use ' ' or '/tigress/dakel'
+save_folder = '/tigress/dakel/4'; % use ' ' or '/tigress/dakel'
 
 
 %% DECIDE WHICH EXPERIMENT TO RUN
