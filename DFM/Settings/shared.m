@@ -23,7 +23,7 @@ DF_model.IV.IV_strength_calibrate = 0; % use calibrated IV strength
 
 settings.specifications.manual_var_select     = [1 142; 1 97]; % manually select specifications
 settings.specifications.random_select         = 1; % randomly select?
-settings.specifications.random_n_spec         = 1000; % number of random specifications
+settings.specifications.random_n_spec         = 500; % number of random specifications
 settings.specifications.random_n_var          = 5; % number of variables in each random specification
 settings.specifications.random_category_range = [1 20; 21 31; 32 76; 77 86; 87 94; 95 131; 132 141;...
                                                  142 159; 160 171; 172 180; 181 207];
@@ -65,13 +65,13 @@ settings.simul.T_burn = 100; % burn-in
 
 % choose estimand
 
-settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_penalize'}; % choose estimands (may be expanded later)
+settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_penalize','var_avg'}; % choose estimands (may be expanded later)
 
 % lag specification
 
-settings.est.est_n_lag      = 0; % estimate number of lags?
+settings.est.est_n_lag      = 1; % estimate number of lags?
 settings.est.est_n_lag_BIC  = 0; % use BIC? otherwise use AIC
-settings.est.n_lags_fix     = 8; % default number of lags if not estimated
+settings.est.n_lags_fix     = 4; % default number of lags if not estimated
 settings.est.n_lags_max     = 20; % maximal lag length for info criteria
 settings.est.res_autocorr_nlags = 4; % check autocorr of VAR(p) residuals up to this order
 
