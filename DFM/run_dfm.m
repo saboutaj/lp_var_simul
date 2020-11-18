@@ -64,7 +64,7 @@ if isnan(lag_type)
 else
     save_suff = num2str(lag_type);
 end
-save_folder = fullfile('Results', strcat('lag', save_suff));
+save_folder = fullfile('/tigress/dakel/Results', strcat('lag', save_suff));
 
 
 %% DGP
