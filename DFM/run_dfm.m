@@ -11,10 +11,18 @@ addpath(genpath(fullfile('..', 'Auxiliary_Functions')))
 addpath(genpath(fullfile('..', 'Estimation_Routines')))
 addpath(genpath('Subroutines'))
 
-rng(1);
+rng(1, 'twister');
 tic;
 
 % Parallel computing object
+
+num_partition = str2num(getenv('SLURM_ARRAY_TASK_COUNT'));
+idx_partition = str2num(getenv('SLURM_ARRAY_TASK_ID'));
+if isempty(num_partition)
+    num_partition = 1;
+    idx_partition = 1;
+end
+    
 num_workers = str2num(getenv('SLURM_CPUS_PER_TASK'));
 if ~isempty(num_workers)
     poolobj = parpool('local', num_workers);
@@ -23,21 +31,40 @@ else
 end
 clear num_workers;
 
-% Storage folder for results
-save_folder = '/tigress/dakel/AIC'; % use ' ' or '/tigress/dakel'
-
 
 %% DECIDE WHICH EXPERIMENT TO RUN
 
+% manually set up experiment
+
 dgp_type = 'G'; % 'MP'; % Either 'G' or 'MP'
 estimand_type = 'ObsShock'; % 'Recursive'; 'IV'; % Either 'ObsShock', 'Recursive', or 'IV'
+lag_type = 4; % No. of lags to impose in estimation, or NaN (meaning AIC)
+
+% overwrite the above experiment setup if specify another in bash
+
+if ~isempty(getenv('MATLAB_DGP_TYPE'))
+    dgp_type = getenv('MATLAB_DGP_TYPE');
+    estimand_type = getenv('MATLAB_ESTIMAND_TYPE');
+    lag_type = str2num(getenv('MATLAB_LAG_TYPE'));
+end
 
 
 %% SETTINGS
 
+% Apply shared settings as well as settings specific to DGP and estimand type
+
 run(fullfile('Settings', 'shared'));
 run(fullfile('Settings', dgp_type));
 run(fullfile('Settings', estimand_type));
+
+% Storage folder for results
+
+if isnan(lag_type)
+    save_suff = '_aic';
+else
+    save_suff = num2str(lag_type);
+end
+save_folder = fullfile('Results', strcat('lag', save_suff));
 
 
 %% DGP
@@ -78,12 +105,14 @@ clear external_shock_data;
 DFM_estimate.calibrate_out       = calibrateIV(DFM_estimate);
 DF_model.calibrated_shock_weight = DFM_estimate.calibrate_out.weight;
 
-if DF_model.IV.IV_strength_calibrate==1
-    DF_model.IV.alpha = DFM_estimate.calibrate_out.alpha;
-    DF_model.IV.sigma_v = DFM_estimate.calibrate_out.sigma_v;
-else
-    DF_model.IV.alpha = DF_model.IV.manual_alpha;
-    DF_model.IV.sigma_v = DF_model.IV.manual_sigma_v;
+if strcmp(estimand_type, 'IV')
+    if DF_model.IV.IV_strength_calibrate==1
+        DF_model.IV.alpha = DFM_estimate.calibrate_out.alpha;
+        DF_model.IV.sigma_v = DFM_estimate.calibrate_out.sigma_v;
+    else
+        DF_model.IV.alpha = DF_model.IV.manual_alpha;
+        DF_model.IV.sigma_v = DF_model.IV.manual_sigma_v;
+    end
 end
 
 %----------------------------------------------------------------
@@ -113,15 +142,23 @@ settings.specifications = pick_var_fn(DF_model, settings);
 
 settings.est.n_methods = length(settings.est.methods_name);
 
-results_irf = NaN(settings.est.n_methods,settings.est.IRF_hor,settings.simul.n_MC,settings.specifications.n_spec); % IRF_hor*n_MC*n_spec
-results_n_lags = NaN(settings.est.n_methods,settings.simul.n_MC,settings.specifications.n_spec); %n_MC*n_spec
+partition_width = ceil(settings.simul.n_MC/num_partition); % number of MC in one partition
+start_MC = (idx_partition - 1) * partition_width + 1; % start index of MC
+end_MC = min(idx_partition * partition_width, settings.simul.n_MC); % end index of MC
 
-results_largest_root_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % n_MC*n_spec
-results_LM_stat_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % n_MC*n_spec
-results_lambda_lp_penalize = NaN(settings.simul.n_MC,settings.specifications.n_spec); % n_MC*n_spec
+results_irf = NaN(settings.est.n_methods,settings.est.IRF_hor,end_MC - start_MC + 1,settings.specifications.n_spec); % IRF_hor*n_MC*n_spec
+results_n_lags = NaN(settings.est.n_methods,end_MC - start_MC + 1,settings.specifications.n_spec); %n_MC*n_spec
+
+results_largest_root_svar = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); % n_MC*n_spec
+results_LM_stat_svar = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); % n_MC*n_spec
+results_LM_pvalue_svar = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); % n_MC*n_spec
+results_Granger_stat_svar = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); % n_MC*n_spec
+results_Granger_pvalue_svar = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); % n_MC*n_spec
+results_lambda_lp_penalize = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); % n_MC*n_spec
 results_weight_var_avg = NaN(2*settings.est.n_lags_max,length(settings.est.average_store_weight),...
-    settings.simul.n_MC,settings.specifications.n_spec); % n_models*n_horizon*n_MC*n_spec
-results_F_stat_svar_iv = NaN(settings.simul.n_MC,settings.specifications.n_spec); %n_MC*n_spec
+    end_MC - start_MC + 1,settings.specifications.n_spec); % n_models*n_horizon*n_MC*n_spec
+results_F_stat_svar_iv = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); %n_MC*n_spec
+results_F_pvalue_svar_iv = NaN(end_MC - start_MC + 1,settings.specifications.n_spec); %n_MC*n_spec
 
 
 %% PRELIMINARY COMPUTATIONS: ESTIMANDS
@@ -176,19 +213,24 @@ end
 
 %% MONTE CARLO ANALYSIS
 
-parfor i_MC = 1:settings.simul.n_MC
+disp('Monte Carlo simulation starts.');
+disp(['dgp type: ', dgp_type]);
+disp(['estimand type: ', estimand_type]);
+disp(['lag type: ', num2str(lag_type)]);
+
+parfor i_MC = 1:(end_MC - start_MC + 1)
 % for i_MC = 1:settings.simul.n_MC
 
-    if mod(i_MC, 10) == 0
-        disp("Monte Carlo:")
+    if mod(i_MC, 100) == 0
+        disp("Monte Carlo repetitions:")
         disp(i_MC)
     end
 
     %----------------------------------------------------------------
     % Generate Data
     %----------------------------------------------------------------
-
-    rng(settings.simul.seed(i_MC));
+    
+    rng(settings.simul.seed(i_MC + start_MC - 1));
 
     data_sim_all = generate_data(DF_model,settings);
 
@@ -201,10 +243,14 @@ parfor i_MC = 1:settings.simul.n_MC
     
     temp_largest_root_svar = NaN(1,settings.specifications.n_spec);
     temp_LM_stat_svar = NaN(1,settings.specifications.n_spec);
+    temp_LM_pvalue_svar = NaN(1,settings.specifications.n_spec);
+    temp_Granger_stat_svar = NaN(1,settings.specifications.n_spec);
+    temp_Granger_pvalue_svar = NaN(1,settings.specifications.n_spec);
     temp_lambda_lp_penalize = NaN(1,settings.specifications.n_spec);
     temp_weight_var_avg = NaN(2*settings.est.n_lags_max,...
         length(settings.est.average_store_weight),settings.specifications.n_spec);
     temp_F_stat_svar_iv = NaN(1,settings.specifications.n_spec);
+    temp_F_pvalue_svar_iv = NaN(1,settings.specifications.n_spec);
     
     %----------------------------------------------------------------
     % Selecting Data
@@ -223,7 +269,9 @@ parfor i_MC = 1:settings.simul.n_MC
             switch settings.est.methods_name{i_method}
 
                 case 'svar' % VAR
-                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),temp_largest_root_svar(i_spec),temp_LM_stat_svar(i_spec)]...
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),...
+                        temp_largest_root_svar(i_spec),temp_LM_stat_svar(i_spec),temp_LM_pvalue_svar(i_spec),...
+                        temp_Granger_stat_svar(i_spec),temp_Granger_pvalue_svar(i_spec)]...
                         = SVAR_est(data_sim_select,settings,0);
 
                 case 'svar_corrbias' % bias-corrected VAR
@@ -247,7 +295,8 @@ parfor i_MC = 1:settings.simul.n_MC
                         = VAR_avg_est(data_sim_select,settings);
 
                 case 'svar_iv' % SVAR-IV       
-                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),temp_F_stat_svar_iv(i_spec)]...
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),...
+                        temp_F_stat_svar_iv(i_spec),temp_F_pvalue_svar_iv(i_spec)]...
                         = SVAR_IV_est(data_sim_select,settings);
                 
             end
@@ -265,14 +314,19 @@ parfor i_MC = 1:settings.simul.n_MC
     
     results_largest_root_svar(i_MC,:) = temp_largest_root_svar;
     results_LM_stat_svar(i_MC,:) = temp_LM_stat_svar;
+    results_LM_pvalue_svar(i_MC,:) = temp_LM_pvalue_svar;
+    results_Granger_stat_svar(i_MC,:) = temp_Granger_stat_svar;
+    results_Granger_pvalue_svar(i_MC,:) = temp_Granger_pvalue_svar;
     results_lambda_lp_penalize(i_MC,:) = temp_lambda_lp_penalize;
     results_weight_var_avg(:,:,i_MC,:) = temp_weight_var_avg;
     results_F_stat_svar_iv(i_MC,:) = temp_F_stat_svar_iv;
+    results_F_pvalue_svar_iv(i_MC,:) = temp_F_pvalue_svar_iv;
 
 end
 
 % clear temporary storage
-clear temp_* i_MC i_spec data_sim_all data_sim_select i_method
+clear temp_* i_MC i_spec data_sim_all data_sim_select i_method ...
+    partition_width start_MC end_MC
 
 
 %% SUMMARIZE RESULTS
@@ -294,6 +348,11 @@ end
 if any(strcmp(settings.est.methods_name, 'svar'))    
     results.largest_root.svar = results_largest_root_svar;
     results.LM_stat.svar = results_LM_stat_svar;
+    results.LM_pvalue.svar = results_LM_pvalue_svar;
+    if strcmp(estimand_type, 'IV')
+        results.Granger_stat.svar = results_Granger_stat_svar;
+        results.Granger_pvalue.svar = results_Granger_pvalue_svar;
+    end
 end
 
 if any(strcmp(settings.est.methods_name, 'lp_penalize'))    
@@ -306,6 +365,7 @@ end
 
 if any(strcmp(settings.est.methods_name, 'svar_iv'))
     results.F_stat.svar_iv = results_F_stat_svar_iv;
+    results.F_pvalue.svar_iv = results_F_pvalue_svar_iv;
 end
 
 clear results_* i_method thisMethod
@@ -316,30 +376,55 @@ clear results_* i_method thisMethod
 
 % compute MSE, Bias2, VCE for each horizon and each specification
 
-for i_method = 1:settings.est.n_methods
+[results.MSE, results.BIAS2, results.VCE] = irf_perform_summary(results.irf, DF_model.target_irf, settings);
+
+%----------------------------------------------------------------
+% Export Results
+%----------------------------------------------------------------
+
+% save results or one partition of results
+
+mkdir(save_folder); 
+if num_partition == 1
+    save(fullfile(save_folder, strcat('DFM_', dgp_type, '_', estimand_type)), ...
+    'DFM_estimate','DF_model','settings','results','-v7.3'); % save results
+else
+    save(fullfile(save_folder, strcat('DFM_', dgp_type, '_', estimand_type, '_', num2str(idx_partition))), ...
+    'DFM_estimate','DF_model','settings','results','-v7.3'); % save one partition of results
+    partition_log_file = fopen(fullfile(save_folder, 'partition_log.txt'),'a+'); % report idx_partition in log file once finish exporting
+    fprintf(partition_log_file, '%d\n', idx_partition);
+    fclose(partition_log_file);
+end
+clear idx_partition
+
+% combine results for multiple partitions
+
+if num_partition > 1
     
-    thisMethod = settings.est.methods_name{i_method};
+    % detect if all the partitions have finished
     
-    results.MSE.(thisMethod) = squeeze(mean((results.irf.(thisMethod) ...
-        - permute(DF_model.target_irf,[1 3 2])).^2, 2));
+    partition_log_file = fopen(fullfile(save_folder, 'partition_log.txt'),'r');
+    partition_finished_list = fscanf(partition_log_file, '%d'); % read in all the indices for finished partitions
+    fclose(partition_log_file);
     
-    results.BIAS2.(thisMethod) = (squeeze(mean(results.irf.(thisMethod) ...
-        , 2)) - DF_model.target_irf).^2;
+    % start to combine when all the partitions have finished
     
-    results.VCE.(thisMethod) = squeeze(var(results.irf.(thisMethod), 0, 2));
+    if length(partition_finished_list) == num_partition       
+        clear results
+        results = combine_results(save_folder, strcat('DFM_', dgp_type, '_', estimand_type), num_partition);
+        
+        % recompute MSE, Bias2, VCE
+        [results.MSE, results.BIAS2, results.VCE] = irf_perform_summary(results.irf, DF_model.target_irf, settings);
+        
+        % save combined results
+        save(fullfile(save_folder, strcat('DFM_', dgp_type, '_', estimand_type)), ...
+            'DFM_estimate','DF_model','settings','results','-v7.3');
+    end
     
 end
 
-clear i_method thisMethod
-
-% export results
-
-cd(save_folder);
-mkdir('Results');
-save(fullfile('Results', strcat('DFM_', dgp_type, '_', estimand_type)),'DFM_estimate','DF_model','settings','results','-v7.3');
-
 delete(poolobj);
-clear save_folder
+clear save_folder save_suff num_partition partition_* poolobj
 toc;
 
 

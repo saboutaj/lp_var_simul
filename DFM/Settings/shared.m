@@ -8,14 +8,6 @@ DF_model.n_fac      = 6; % number of factor
 DF_model.n_lags_fac = 2; % lag order of factor
 DF_model.n_lags_uar = 2; % lag order of measurement error
 
-% IV (may be overwritten later)
-
-DF_model.IV.rho     = 0.1; % IV persistence
-DF_model.IV.manual_alpha   = 1; % IV shock coefficient
-DF_model.IV.manual_sigma_v = 1; % IV noise
-
-DF_model.IV.IV_strength_calibrate = 0; % use calibrated IV strength
-
 
 %% Experiment Specification
 
@@ -23,7 +15,7 @@ DF_model.IV.IV_strength_calibrate = 0; % use calibrated IV strength
 
 settings.specifications.manual_var_select     = [1 142; 1 97]; % manually select specifications
 settings.specifications.random_select         = 1; % randomly select?
-settings.specifications.random_n_spec         = 500; % number of random specifications
+settings.specifications.random_n_spec         = 6; % number of random specifications
 settings.specifications.random_n_var          = 5; % number of variables in each random specification
 settings.specifications.random_category_range = [1 20; 21 31; 32 76; 77 86; 87 94; 95 131; 132 141;...
                                                  142 159; 160 171; 172 180; 181 207];
@@ -52,7 +44,7 @@ settings.est.VAR_infinity_truncate = 50;
 
 % number of Monte Carlo draws
 
-settings.simul.n_MC    = 5000; % number of Monte Carlo reps
+settings.simul.n_MC    = 9; % number of Monte Carlo reps
 settings.simul.seed    = (1:settings.simul.n_MC)*10 + randi([0,9],1,settings.simul.n_MC); % random seed
 
 % simulation details
@@ -69,11 +61,11 @@ settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_penalize'
 
 % lag specification
 
-settings.est.est_n_lag      = 1; % estimate number of lags?
+settings.est.est_n_lag      = isnan(lag_type); % estimate number of lags?
 settings.est.est_n_lag_BIC  = 0; % use BIC? otherwise use AIC
-settings.est.n_lags_fix     = 4; % default number of lags if not estimated
+settings.est.n_lags_fix     = lag_type; % default number of lags if not estimated
 settings.est.n_lags_max     = 20; % maximal lag length for info criteria
-settings.est.res_autocorr_nlags = 4; % check autocorr of VAR(p) residuals up to this order
+settings.est.res_autocorr_nlags = 1; % check autocorr of VAR(p) residuals up to this order
 
 % BVAR prior
 
@@ -92,3 +84,4 @@ settings.est.CV_folds      = 5; % Number of folds used for cross validation
 
 settings.est.average_store_weight = [2, 11, 20]; % store model weights at which horizon
 settings.est.average_max_lags     = 1; % include lags up to n_lags_max? otherwise up to estimated lags
+settings.est.average_options      = optimoptions('quadprog','Display','off');
