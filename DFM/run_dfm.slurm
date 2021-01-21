@@ -19,4 +19,4 @@ echo "My SLURM_ARRAY_TASK_ID is $SLURM_ARRAY_TASK_ID"
 echo "Executing on the machine:" $(hostname)
 
 cd /home/dakel/lp_var_simul/DFM
-/usr/licensed/bin/matlab -singleCompThread -nodisplay -nosplash -r "num_workers=$SLURM_CPUS_PER_TASK; spec_id=$SLURM_ARRAY_TASK_ID; dgp_type=$DGP_TYPE; estimand_type=$ESTIMAND_TYPE; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_dfm;"
+/usr/licensed/bin/matlab -singleCompThread -nodisplay -nosplash -r "clear all; num_workers=$SLURM_CPUS_PER_TASK; spec_id=$SLURM_ARRAY_TASK_ID; dgp_type=$DGP_TYPE; estimand_type=$ESTIMAND_TYPE; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_dfm;"

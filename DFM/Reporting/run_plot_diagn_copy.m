@@ -7,10 +7,10 @@ addpath('Plotting_Functions');
 %% Settings
 
 % select lag length specifications
-lags_select    = 1; %[1 2];
+lags_select    = 3; %[1 2];
 
 % select experiments
-exper_select = 2; %[2 6];
+exper_select = 1; %[2 6];
 
 % select estimation methods for each experiment
 methods_iv_select        = [1 2 3 4 5 7];
@@ -67,9 +67,9 @@ for nf=1:length(lags_folders) % For each folder...
                 % Select relevant repetitions from sample distribution of the diagnostic
                 switch iq
                     case 1
-                        the_select = (the_diag<the_diag_q(1)); % Obs. in lower tail
+                        the_select = repmat(median(the_diag,1)<the_diag_q(1),[size(the_diag,1),1]); % Obs. in lower tail
                     case 2
-                        the_select = (the_diag>the_diag_q(2)); % Obs. in upper tail
+                        the_select = repmat(median(the_diag,1)>the_diag_q(2),[size(the_diag,1),1]); % Obs. in upper tail
                 end
 
                 % Conditional loss
