@@ -4,7 +4,7 @@
 
 %% HOUSEKEEPING
 
-% clear all
+clear all
 close all
 
 addpath(genpath(fullfile('..', 'Auxiliary_Functions')))
@@ -16,7 +16,7 @@ tic;
 
 % Parallel computing object
 
-% num_workers = 1; % number of workers in a parellel pool
+num_workers = 1; % number of workers in a parellel pool
 poolobj = parpool('local', num_workers);
 clear num_workers;
 
@@ -25,10 +25,10 @@ clear num_workers;
 
 % manually set up experiment
 
-% spec_id = 1; % specification choice set id (i.e. the seed for random draws of specifications)
-% dgp_type = 'G'; % 'MP'; % Either 'G' or 'MP'
-% estimand_type = 'ObsShock'; % 'Recursive'; 'IV'; % Either 'ObsShock', 'Recursive', or 'IV'
-% lag_type = 4; % No. of lags to impose in estimation, or NaN (meaning AIC)
+spec_id = 1; % specification choice set id (i.e. the seed for random draws of specifications)
+dgp_type = 'G'; % 'MP'; % Either 'G' or 'MP'
+estimand_type = 'ObsShock'; % 'Recursive'; 'IV'; % Either 'ObsShock', 'Recursive', or 'IV'
+lag_type = 4; % No. of lags to impose in estimation, or NaN (meaning AIC)
 
 
 %% SETTINGS
@@ -41,7 +41,7 @@ run(fullfile('Settings', estimand_type));
 
 % Storage folder for results
 
-% save_pre = 'Results'; % destination to store the results
+save_pre = 'Results'; % destination to store the results
 if isnan(lag_type)
     save_suff = '_aic';
 else

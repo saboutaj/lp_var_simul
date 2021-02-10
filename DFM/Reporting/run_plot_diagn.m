@@ -10,8 +10,8 @@ addpath('Plotting_Functions');
 % select lag length specifications
 lags_select    = 1;
 
-% select experiments
-exper_select = 2;
+% select and group experiments
+exper_select_group = {[2,5], 1};
 
 % select estimation methods for each experiment
 methods_iv_select        = [1 2 3 4 5 7];
@@ -40,9 +40,16 @@ for nf=1:length(lags_folders) % For each folder...
         % Load results
         load_results;
         
+        % see if ready to plot for this group of experiments
+        if exper_group_end(ne) == 0
+            continue;
+        end
+        
         % write down the index of quantiles across MCs
         qs_idx = 2 + find(ismember(res.settings.simul.quantiles,diag_qs)); % index of median number in the quantile list (including mean and std)
-
+        
+        % ALL THE FOLLOWING CODE NEEDS TO BE REVISED FOR THE SIMPLIFIED
+        % RESULT FILES
         
         %----------------------------------------------------------------
         % Compute Reporting Results
@@ -91,22 +98,22 @@ for nf=1:length(lags_folders) % For each folder...
                 subplot(1,2,iq);
                 plot_loss(horzs(2:end)-1, squeeze(nanmedian(the_bias_rel_cond(2:end,:,:), 2)), [], ...
                     strjoin({exper_plotname, ': Relative Bias', diagns_name{d}, title_qs{iq}}), methods_names_plot, font_size, true);
-                ax_bias(iq) = gca;              
+                same_ylim(ax_bias,gca); % Enforce same ylim
+                ax_bias = gca;             
                 
                 % Conditional std dev
                 figure(f_std);
                 subplot(1,2,iq);
                 plot_loss(horzs(2:end)-1, squeeze(nanmedian(the_std_rel_cond(2:end,:,:), 2)), [], ...
                     strjoin({exper_plotname, ': Relative Std', diagns_name{d}, title_qs{iq}}), methods_names_plot, font_size, true);
-                ax_std(iq) = gca;
+                same_ylim(ax_std,gca); % Enforce same ylim
+                ax_std = gca;
                 
             end
             
             figure(f_bias);
-            same_ylim(ax_bias); % Enforce same ylim
             plot_save(fullfile(output_folder, strcat('diagn_', diagns_name{d}, '_bias_reltruth')), output_suffix);
             figure(f_std);
-            same_ylim(ax_std); % Enforce same ylim
             plot_save(fullfile(output_folder, strcat('diagn_', diagns_name{d}, '_std_reltruth')), output_suffix);
 
         end
