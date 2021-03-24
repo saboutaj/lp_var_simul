@@ -6,13 +6,11 @@
 #SBATCH --mem-per-cpu=25G
 #SBATCH --time=1:00:00
 #SBATCH --array=1
-#SBATCH --mail-type=end
-#SBATCH --mail-user=dakel@princeton.edu
 
 export SPEC_ID_ARRAY=1:30
 export DGP_TYPE=G
 export ESTIMAND_TYPE=ObsShock
-export LAG_TYPE=NaN
+export LAG_TYPE=4
 export SAVE_PRE=/tigress/dakel/Results
 
 echo "My SLURM_ARRAY_JOB_ID is $SLURM_ARRAY_JOB_ID."

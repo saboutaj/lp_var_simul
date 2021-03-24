@@ -6,8 +6,6 @@
 #SBATCH --mem-per-cpu=128G
 #SBATCH --time=24:00:00
 #SBATCH --array=1
-#SBATCH --mail-type=end
-#SBATCH --mail-user=dakel@princeton.edu
 
 export LAGS_SELECT=1
 export EXPER_SELECT=1

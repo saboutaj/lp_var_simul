@@ -5,3 +5,5 @@
 *.png
 *.eps
 *.DS_Store
+*.csv
+DFM/Reporting/.ipynb_checkpoints/*.*

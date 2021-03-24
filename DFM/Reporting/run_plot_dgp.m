@@ -1,19 +1,22 @@
+%% DFM SIMULATION STUDY: TABLES AND PLOTS FOR DGP FEATURES
+% Dake Li, Mikkel Plagborg-Møller and Christian Wolf
+% This version: 02/23/2021
+
+clc
+close all
 clear all;
 addpath('Plotting_Functions');
 
-% Table and plots of features of GDP and estimated tuning parameters
-
-
-%% Settings
+%% SETTINGS
 
 % select lag length specifications
-lags_select    = 2;
+lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags)
 
 % select and group experiments
-exper_select_group = {[2,5], 1};
+exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 7];
+methods_iv_select        = [1 2 3 4 5 6 7];
 methods_obsshock_select  = [1 2 3 4 5 6];
 methods_recursive_select = [1 2 3 4 5 6];
 
@@ -21,22 +24,30 @@ methods_recursive_select = [1 2 3 4 5 6];
 settings_shared;
 
 % Summary statistics for table
-tab_stat = {'R0_sq', 'LRV_Cov_tr_ratio', 'VAR_largest_root', 'frac_coef_for_large_lags'}; % Summary stats to copy (in addition to IRF stats defined below)
+tab_stat = {'LRV_Cov_tr_ratio', 'VAR_largest_root', 'frac_coef_for_large_lags', 'R0_sq'}; % Summary stats to copy (in addition to IRF stats defined below)
 tab_quants = [0.1 0.25 0.5 0.75 0.9]; % Quantiles to report across specifications
 
+% Table with model specification tests
+spec_lags_cutoff = 2; % Report how often quantiles of lag length exceeds this number
+spec_lags_quants = [0.5 0.75 0.9]; % Quantiles of lag length to report
+spec_lm_power = 0.25; % Report fraction of DGPs with at least this power of LM test
+spec_lm_signifs = [0.05 0.1 0.25]; % Significance levels for LM test
+
 % IRF examples to plot
-spec_select = 10:10:70;
-linestyles = {'-', '--', ':', '-o', '--o', ':o', '-s'};
-colors = lines(7);
+spec_select = [10 20 30 3010 3020 3030];
+linestyles = {'-', '--', ':', '-o', '--o', ':o'};
+colors = lines(6);
 
-
-%% Create tables and plots for each experiment
+%% CREATE TABLES AND PLOTS
 
 for nf=1:length(lags_folders) % For each folder...
 
     for ne=1:length(exper_files) % For each experiment in folder...
         
-        % Load results
+        %----------------------------------------------------------------
+        % Load Results
+        %----------------------------------------------------------------
+
         load_results;
         
         % see if ready to plot for this group of experiments
@@ -45,10 +56,11 @@ for nf=1:length(lags_folders) % For each folder...
         end
         
         % Record the index of median across MCs
-        median_idx = 2 + find(res.settings.simul.quantiles==0.5); % index of median number in the quantile list (including mean and std)
+        median_idx = 2 + find(res.settings.simul.quantiles==0.5); % index of median number in the quantile list (including mean and std)        
         
-        
-        %% Table of summary statistics
+        %----------------------------------------------------------------
+        % Tables of Summary Statistics
+        %----------------------------------------------------------------
         
         tab = table;
         
@@ -65,7 +77,7 @@ for nf=1:length(lags_folders) % For each folder...
         % IRF summary statistics
         tab.irf_num_local_extrema = sum(diff(sign(diff(res.DF_model.target_irf',1,2)),1,2)~=0,2);
         [~,I] = max(abs(res.DF_model.target_irf)',[],2);
-        tab.irf_maxabs_h = I;
+        tab.irf_maxabs_h = res.settings.est.IRF_select(I)'-1;
         tab.irf_mean_max_ratio = mean(res.DF_model.target_irf',2)./max(abs(res.DF_model.target_irf)',[],2);
         
         % R-squared from regressing IRFs on quadratic
@@ -82,12 +94,37 @@ for nf=1:length(lags_folders) % For each folder...
         tab_summ = [tab_summ2 tab_summ];
         
         % Write to file
-        writetable(tab_summ, fullfile(output_folder, 'summ.csv'));
+        writetable(tab_summ, fullfile(output_folder, 'dgp_summ.csv'));
         
-        clearvars I X betas resid tab tab_summ tab_summ2;
+        clearvars I X betas resid tab tab_summ tab_summ2;        
+        
+        %----------------------------------------------------------------
+        % Tables of Specification Tests
+        %----------------------------------------------------------------
+        
+        tab_spec = table;
+
+        % Number of lags
+        for ii=1:length(spec_lags_quants)
+            tab_spec.(sprintf('%s%02d', 'nlag_exceed_q', round(100*spec_lags_quants(ii)))) ...
+                = mean(res.results.n_lags.svar(2+find(res.settings.simul.quantiles==spec_lags_quants(ii)),:)>=spec_lags_cutoff);
+        end
+        
+        % Power of LM test
+        for ii=1:length(spec_lm_signifs)
+            tab_spec.(sprintf('%s%02d', 'lm_power_', round(100*spec_lm_signifs(ii)))) ...
+                = mean(res.results.LM_pvalue.svar(2+find(res.settings.simul.quantiles==spec_lm_power),:)<spec_lm_signifs(ii));
+        end
+        
+        % Write to file
+        writetable(tab_spec, fullfile(output_folder, 'dgp_spec.csv'));
+        
+        clearvars tab_spec;
         
         
-        %% Report features of DGP
+        %----------------------------------------------------------------
+        % Plots to summarize DGP Features
+        %----------------------------------------------------------------
                 
         % Degree of invertibility
         figure;
@@ -125,22 +162,22 @@ for nf=1:length(lags_folders) % For each folder...
         norm_irf = @(x) x/max(abs(x));
         for i_spec_indx = 1:length(spec_select)
             i_spec = spec_select(i_spec_indx);
-            plot(res.settings.est.IRF_select, norm_irf(res.DF_model.target_irf(:,i_spec)), ...
+            plot(res.settings.est.IRF_select-1, norm_irf(res.DF_model.target_irf(:,i_spec)), ...
                  linestyles{i_spec_indx}, 'Color', colors(i_spec_indx,:), 'Linewidth', 2, ...
                  'MarkerSize', 4, 'MarkerFaceColor', colors(i_spec_indx,:));
         end
         hold off;
-%         title(exper_plotname,'interpreter','latex','fontsize',20);
         xlabel('Horizon','interpreter','latex','FontSize',12);
-        set(gca,'XTick',[min(res.settings.est.IRF_select) 5:5:max(res.settings.est.IRF_select)]);
-        xlim([min(res.settings.est.IRF_select) max(res.settings.est.IRF_select)]);
+        set(gca,'XTick',[min(res.settings.est.IRF_select-1) 2:2:max(res.settings.est.IRF_select-1)]);
+        xlim([min(res.settings.est.IRF_select-1) max(res.settings.est.IRF_select-1)]);
         grid on;
         set(gca,'TickLabelInterpreter','latex');
         set(gca,'FontSize',12);
-        plot_save(fullfile(output_folder, 'dgp_irfs'), output_suffix);
+        plot_save(fullfile(output_folder, 'dgp_irfs'), output_suffix);        
         
-        
-        %% Estimated tuning parameters
+        %----------------------------------------------------------------
+        % Tuning Parameters for Estimation Methods
+        %----------------------------------------------------------------
         
         % Number of lags
         the_nlags = res.results.n_lags.svar;
@@ -162,11 +199,6 @@ for nf=1:length(lags_folders) % For each folder...
         set(gca, 'xscale','log'); % Log scale for x axis
         title(strjoin({exper_plotname, ': median shrinkage penalty (across specs)'}), 'Interpreter', 'none');
         plot_save(fullfile(output_folder, 'dgp_lambda'), output_suffix);
-        
-%         figure;
-%         histogram(std(log(the_lambda)), 'Normalization', 'probability');
-%         title(strjoin({exper_plotname, ': std (across sims) of log shrinkage penalty'}), 'Interpreter', 'none');
-%         plot_save(fullfile(output_folder, 'dgp_lambda_logstd'), output_suffix);
         
         % Model-averaging weights
         if isfield(res.results, 'weight')
@@ -190,10 +222,11 @@ for nf=1:length(lags_folders) % For each folder...
             sgtitle(strjoin({exper_plotname, ': average model-avg weight (across specs+sims)'}), 'FontSize', 11, 'FontWeight', 'bold', 'Interpreter', 'none');
             plot_save(fullfile(output_folder, 'dgp_weight'), output_suffix);
             
-        end
+        end       
         
-        
-        %% IV F-stat and Granger Causality Wald-stat
+        %----------------------------------------------------------------
+        % IV F-Statistics
+        %----------------------------------------------------------------
         
         if isfield(res.results, 'F_stat')
                        
@@ -206,6 +239,10 @@ for nf=1:length(lags_folders) % For each folder...
             plot_save(fullfile(output_folder, 'dgp_F'), output_suffix);
             
         end
+        
+        %----------------------------------------------------------------
+        % Granger Causality
+        %----------------------------------------------------------------
         
         if isfield(res.results, 'Granger_stat')
             

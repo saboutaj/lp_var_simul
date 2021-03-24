@@ -1,5 +1,6 @@
-%% PLOT SIMULATION RESULTS: BIAS/VARIANCE TRADE-OFF
-% this version: 09/22/2020
+%% DFM SIMULATION STUDY: METHOD CHOICE
+% Dake Li, Mikkel Plagborg-Møller and Christian Wolf
+% This version: 02/23/2021
 
 %% HOUSEKEEPING
 
@@ -12,14 +13,18 @@ warning('off','MATLAB:structOnObject')
 
 %% SETTINGS
 
+%----------------------------------------------------------------
+% Experiment Selection
+%----------------------------------------------------------------
+
 % select lag length specifications
 lags_select    = 2;
 
 % select and group experiments
-exper_select_group = {[2,5], 1};
+exper_select_group = {[2,5], [1,4], [3,6]};
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 7];
+methods_iv_select        = [1 2 3 4 5 6 7];
 methods_obsshock_select  = [1 2 3 4 5 6];
 methods_recursive_select = [1 2 3 4 5 6];
 
@@ -32,22 +37,23 @@ settings_shared;
 
 % bias weight grid
 
-n_weight    = 10001;
+n_weight    = 1001;
 weight_grid = linspace(1,0,n_weight)';
 
-% reference method (should have something here on this being LP...)
+% reference method
 
-% base_names = {'SVAR','LP'};
-base_names = {'SVAR'};
-
-% bias-variance ordering
-
-trade_off_pos_iv = [4 3 6 1 2 5 7];   % IV DGP
-trade_off_pos_noniv = [4 3 6 1 2 5];  % Other DGPs
+base_names = {'VAR','LP'};
+base_indic = NaN(length(exper_files),length(base_names)); % find index of reference method(s)
 
 % construction of choice plots: average over specifications?
 
 choice_averaging = 1;
+
+% lines
+
+lines_plot = lines;
+lines_plot = lines_plot(1:7,:);
+lines_plot = lines_plot([4 3 1 2 5 6 7],:);
 
 %----------------------------------------------------------------
 % Colors
@@ -72,8 +78,9 @@ cmap_inv = interp2(X([1,25,50],:),Y([1,25,50],:),cmap_inv,X,Y);
 
 %% FIGURES
 
-% Find index of reference method
-base_indic = NaN(length(exper_files),length(base_names));
+%----------------------------------------------------------------
+% Results for Reference Method
+%----------------------------------------------------------------
 
 for ne=1:length(exper_files)    
     for nb=1:length(base_names)
@@ -85,11 +92,18 @@ for ne=1:length(exper_files)
     end
 end
 
+%----------------------------------------------------------------
+% Method Choice Results
+%----------------------------------------------------------------
+
 for nf=1:length(lags_folders) % For each folder...
 
     for ne=1:length(exper_files) % For each experiment in folder...
         
-        % Load results
+        %----------------------------------------------------------------
+        % Load Results
+        %----------------------------------------------------------------
+
         load_results;
         
         % see if ready to plot for this group of experiments
@@ -110,7 +124,7 @@ for nf=1:length(lags_folders) % For each folder...
         the_VCErel   = the_VCE./the_rms_irf.^2;
         
         %----------------------------------------------------------------
-        % Compute Comparison Results
+        % Compute Method Choice
         %----------------------------------------------------------------
         
         for nb = 1:length(base_names)
@@ -126,6 +140,8 @@ for nf=1:length(lags_folders) % For each folder...
                     continue
                 end
                 
+                % comparison with base method
+                
                 pref_base = zeros(n_weight,max(res.settings.est.IRF_select),size(the_BIAS2rel,2));
                 for i_weight = 1:n_weight
                     loss_base   = weight_grid(i_weight) * the_BIAS2rel(:,:,base_indic(ne,nb)) + (1-weight_grid(i_weight)) * the_VCErel(:,:,base_indic(ne,nb));
@@ -134,66 +150,39 @@ for nf=1:length(lags_folders) % For each folder...
                     pref_base(i_weight,:,:) = (loss_base <= loss_method);
                 end
                 pref_base = mean(pref_base,3);
-
-                plot_tradeoff(1-pref_base(:,2:end), cmap, horzs(2:end)-1, weight_grid, ...
-                    strjoin({exper_plotname, ':', the_titles{j}, 'Preferred Over', base_method_name}), font_size)
-                plot_save(fullfile(output_folder, strcat('tradeoff_', removeChars(the_titles{j}), '_vs_', removeChars(base_method_name))), output_suffix);
+                
+                if strcmp(the_titles{j},'Pen LP')
+                    the_start_ind=1; % Include h=0 for penalized LP
+                else
+                    the_start_ind=2;
+                end
+                
+                % plot final results
+                plot_tradeoff(pref_base(:,the_start_ind:end), cmap, horzs(the_start_ind:end)-1, weight_grid, ...
+                    strjoin({exper_plotname, ':', base_method_name, 'Preferred Over', the_titles{j}}), font_size)
+                plot_save(fullfile(output_folder, strcat(exper_names{ne}, '_tradeoff_', removeChars(base_method_name), '_vs_', removeChars(the_titles{j}))), output_suffix);
 
             end
         
         end
         
         %----------------------------------------------------------------
-        % Compute Best Procedure
+        % Compute & Plot Best Overall Procedure
         %----------------------------------------------------------------
         
         choice_raw = zeros(n_weight,max(res.settings.est.IRF_select));
         for i_weight = 1:n_weight
             loss_all = weight_grid(i_weight) * the_BIAS2rel + (1-weight_grid(i_weight)) * the_VCErel;
             loss_all = squeeze(mean(loss_all,2));
+            loss_all(:,2:end) = loss_all(:,2:end) + sqrt(eps);
             [~,choice_raw(i_weight,:)] = min(loss_all,[],2);
         end
         
-        plot_choice(choice_raw, lines, horzs, weight_grid, methods_select{ne}, ...
+        writematrix([0 horzs; weight_grid(:) choice_raw], fullfile(output_folder, 'tradeoff_best.csv')); % Save to file
+        
+        plot_choice(choice_raw, lines_plot, horzs, weight_grid, methods_select{ne}, ...
                 strjoin({exper_plotname, ': Best Procedure'}), methods_names_plot, 1, font_size);
-        plot_save(fullfile(output_folder, 'tradeoff_best'), output_suffix); 
-        
-        %----------------------------------------------------------------
-        % Compute Choice Results
-        %----------------------------------------------------------------
-        
-        if isempty(strfind(exper_names{ne}, 'IV'))
-            trade_off_pos = trade_off_pos_noniv;
-        else
-            trade_off_pos = trade_off_pos_iv;
-        end
-        [~,trade_off_aux] = sort(trade_off_pos);
-        
-        if choice_averaging == 0
-            
-            choice = NaN(n_weight,max(res.settings.est.IRF_select));
-            for i_method = 1:length(methods_names{ne})
-                choice(choice_raw == i_method) = trade_off_pos(methods_select{ne}(i_method));
-            end
-        
-        else
-
-            choice_raw = zeros(n_weight,max(res.settings.est.IRF_select),size(the_BIAS2rel,2));
-            for i_weight = 1:n_weight
-                loss_all = weight_grid(i_weight) * the_BIAS2rel + (1-weight_grid(i_weight)) * the_VCErel;
-                [~,choice_raw(i_weight,:,:)] = min(loss_all,[],3);
-            end
-            choice = NaN(n_weight,max(res.settings.est.IRF_select),size(the_BIAS2rel,2));
-            for i_method = 1:length(methods_names{ne})
-                choice(choice_raw == i_method) = trade_off_pos(methods_select{ne}(i_method));
-            end
-            choice = mean(choice,3);
-        
-        end
-        
-        plot_choice(choice(:,2:end), cmap_inv, horzs(2:end)-1, weight_grid, methods_select{ne}, ...
-                strjoin({exper_plotname, ': Method Choice'}), methods_iv_names(trade_off_aux), 0, font_size);
-        plot_save(fullfile(output_folder, 'tradeoff_choice'), output_suffix);
+        plot_save(fullfile(output_folder, strcat(exper_names{ne}, '_tradeoff_best')), output_suffix);  
         
     end
     

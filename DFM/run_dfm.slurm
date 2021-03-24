@@ -5,9 +5,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=4G
 #SBATCH --time=00:30:00
-#SBATCH --array=1-2
-#SBATCH --mail-type=end
-#SBATCH --mail-user=dakel@princeton.edu
+#SBATCH --array=1
 
 export DGP_TYPE=G
 export ESTIMAND_TYPE=ObsShock
@@ -18,5 +16,8 @@ echo "My SLURM_ARRAY_JOB_ID is $SLURM_ARRAY_JOB_ID."
 echo "My SLURM_ARRAY_TASK_ID is $SLURM_ARRAY_TASK_ID"
 echo "Executing on the machine:" $(hostname)
 
+module purge
+module load matlab/R2020b
+
 cd /home/dakel/lp_var_simul/DFM
-/usr/licensed/bin/matlab -singleCompThread -nodisplay -nosplash -r "clear all; num_workers=$SLURM_CPUS_PER_TASK; spec_id=$SLURM_ARRAY_TASK_ID; dgp_type=$DGP_TYPE; estimand_type=$ESTIMAND_TYPE; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_dfm;"
+matlab -singleCompThread -nodisplay -nosplash -r "clear all; num_workers=$SLURM_CPUS_PER_TASK; spec_id=$SLURM_ARRAY_TASK_ID; dgp_type='$DGP_TYPE'; estimand_type='$ESTIMAND_TYPE'; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_dfm;"
