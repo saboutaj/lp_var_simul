@@ -6,7 +6,7 @@
 
 % clc
 % clear all
-close all
+% close all
 
 addpath(genpath(fullfile('..', 'Auxiliary_Functions')))
 addpath(genpath(fullfile('..', 'Estimation_Routines')))
@@ -66,6 +66,9 @@ DF_model.delta         = DFM_estimate.delta;
 DF_model.sigma_v       = DFM_estimate.sigma_v;
 
 DF_model.variable_name = DFM_estimate.bplabvec_long;
+DF_model.trans_code = DFM_estimate.bptcodevec; % transformation code
+% (1) y = x, (2) y = (1-L)x, (3) y = (1-L)^2 x,
+% (4) y = ln(x), (5) y = (1-L)ln(x), (6) y = (1-L)^2 ln(x)
 
 %----------------------------------------------------------------
 % Calibrate IV Strength
@@ -85,8 +88,18 @@ clear external_shock_data;
 DFM_estimate.calibrate_out       = calibrateIV(DFM_estimate);
 DF_model.calibrated_shock_weight = DFM_estimate.calibrate_out.weight;
 
+% set up IV DGP
+
 if strcmp(estimand_type, 'IV')
-    if DF_model.IV.IV_strength_calibrate==1
+    if settings.est.IV.IV_persistence_calibrate==1
+        DF_model.IV.rho = DFM_estimate.calibrate_out.rho;
+    else
+        DF_model.IV.rho = DF_model.IV.manual_rho;
+    end
+    
+    DF_model.IV.rho_grid = DF_model.IV.rho * settings.est.IV.IV_persistence_scale;
+    
+    if settings.est.IV.IV_strength_calibrate==1
         DF_model.IV.alpha = DFM_estimate.calibrate_out.alpha;
         DF_model.IV.sigma_v = DFM_estimate.calibrate_out.sigma_v;
     else
@@ -113,7 +126,21 @@ DF_model.ABCD  = ABCD_fun_DFM(DF_model);
 % Select Individual DGPs from Encompassing Model
 %----------------------------------------------------------------
 
+% randomly draw DGPs
+
 settings.specifications = pick_var_fn(DF_model, settings, spec_id);
+
+% replicate draws of DGPs for multiple IV persistence setups
+
+if strcmp(estimand_type, 'IV')
+    settings.specifications.var_select = repmat(settings.specifications.var_select, ...
+        [length(settings.est.IV.IV_persistence_scale),1]);
+    settings.specifications.rho_select = repmat(DF_model.IV.rho_grid, ...
+        [settings.specifications.n_spec, 1]);
+    settings.specifications.rho_select = settings.specifications.rho_select(:);
+    settings.specifications.random_n_spec = size(settings.specifications.var_select, 1);
+    settings.specifications.n_spec = size(settings.specifications.var_select, 1);
+end
 
 %----------------------------------------------------------------
 % Create Placeholders for Results
@@ -133,11 +160,15 @@ results_n_lags = NaN(settings.est.n_methods,settings.simul.n_MC,settings.specifi
 results_largest_root_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % largest VAR root: size n_MC*n_spec
 results_LM_stat_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % LM statistic: size n_MC*n_spec
 results_LM_pvalue_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % LM p value: size n_MC*n_spec
+results_Hausman_stat_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % LM statistic: size n_MC*n_spec
+results_Hausman_pvalue_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % LM p value: size n_MC*n_spec
 results_Granger_stat_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % Granger statistic: size n_MC*n_spec
 results_Granger_pvalue_svar = NaN(settings.simul.n_MC,settings.specifications.n_spec); % Granger p value: size n_MC*n_spec
 results_lambda_lp_penalize = NaN(settings.simul.n_MC,settings.specifications.n_spec); % pen. LP lambda: size n_MC*n_spec
 results_weight_var_avg = NaN(2*settings.est.n_lags_max,length(settings.est.average_store_weight),...
     settings.simul.n_MC,settings.specifications.n_spec); % weights in VAR averaging: size n_models*n_horizon*n_MC*n_spec
+results_submodel_irf_var_avg = NaN(2*settings.est.n_lags_max,settings.est.IRF_hor,...
+    settings.simul.n_MC,settings.specifications.n_spec); % IRF in each VAR submodel: size n_models*IRF_hor*n_MC*n_spec
 results_F_stat_svar_iv = NaN(settings.simul.n_MC,settings.specifications.n_spec); % VAR-IV F statistic: size n_MC*n_spec
 results_F_pvalue_svar_iv = NaN(settings.simul.n_MC,settings.specifications.n_spec); % VAR-IV F p value: size n_MC*n_spec
 
@@ -223,11 +254,15 @@ parfor i_MC = 1:settings.simul.n_MC
     temp_largest_root_svar = NaN(1,settings.specifications.n_spec);
     temp_LM_stat_svar = NaN(1,settings.specifications.n_spec);
     temp_LM_pvalue_svar = NaN(1,settings.specifications.n_spec);
+    temp_Hausman_stat_svar = NaN(1,settings.specifications.n_spec);
+    temp_Hausman_pvalue_svar = NaN(1,settings.specifications.n_spec);
     temp_Granger_stat_svar = NaN(1,settings.specifications.n_spec);
     temp_Granger_pvalue_svar = NaN(1,settings.specifications.n_spec);
     temp_lambda_lp_penalize = NaN(1,settings.specifications.n_spec);
     temp_weight_var_avg = NaN(2*settings.est.n_lags_max,...
         length(settings.est.average_store_weight),settings.specifications.n_spec);
+    temp_submodel_irf_var_avg = NaN(2*settings.est.n_lags_max,...
+        settings.est.IRF_hor,settings.specifications.n_spec);
     temp_F_stat_svar_iv = NaN(1,settings.specifications.n_spec);
     temp_F_pvalue_svar_iv = NaN(1,settings.specifications.n_spec);
     
@@ -248,8 +283,9 @@ parfor i_MC = 1:settings.simul.n_MC
             switch settings.est.methods_name{i_method}
 
                 case 'svar' % VAR
-                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),...
-                        temp_largest_root_svar(i_spec),temp_LM_stat_svar(i_spec),temp_LM_pvalue_svar(i_spec),...
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),temp_largest_root_svar(i_spec),...
+                        temp_LM_stat_svar(i_spec),temp_LM_pvalue_svar(i_spec),...
+                        temp_Hausman_stat_svar(i_spec),temp_Hausman_pvalue_svar(i_spec),...
                         temp_Granger_stat_svar(i_spec),temp_Granger_pvalue_svar(i_spec)]...
                         = SVAR_est(data_sim_select,settings,0);
 
@@ -270,7 +306,7 @@ parfor i_MC = 1:settings.simul.n_MC
                         = LP_shrink_est(data_sim_select,settings);
 
                 case 'var_avg' % VAR model averaging
-                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec), temp_weight_var_avg(:,:,i_spec)]...
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec), temp_weight_var_avg(:,:,i_spec), temp_submodel_irf_var_avg(:,:,i_spec)]...
                         = VAR_avg_est(data_sim_select,settings);
 
                 case 'svar_iv' % SVAR-IV       
@@ -294,10 +330,13 @@ parfor i_MC = 1:settings.simul.n_MC
     results_largest_root_svar(i_MC,:) = temp_largest_root_svar;
     results_LM_stat_svar(i_MC,:) = temp_LM_stat_svar;
     results_LM_pvalue_svar(i_MC,:) = temp_LM_pvalue_svar;
+    results_Hausman_stat_svar(i_MC,:) = temp_Hausman_stat_svar;
+    results_Hausman_pvalue_svar(i_MC,:) = temp_Hausman_pvalue_svar;
     results_Granger_stat_svar(i_MC,:) = temp_Granger_stat_svar;
     results_Granger_pvalue_svar(i_MC,:) = temp_Granger_pvalue_svar;
     results_lambda_lp_penalize(i_MC,:) = temp_lambda_lp_penalize;
     results_weight_var_avg(:,:,i_MC,:) = temp_weight_var_avg;
+    results_submodel_irf_var_avg(:,:,i_MC,:) = temp_submodel_irf_var_avg;
     results_F_stat_svar_iv(i_MC,:) = temp_F_stat_svar_iv;
     results_F_pvalue_svar_iv(i_MC,:) = temp_F_pvalue_svar_iv;
 
@@ -329,6 +368,10 @@ if any(strcmp(settings.est.methods_name, 'svar'))
     results.largest_root.svar = results_largest_root_svar;
     results.LM_stat.svar = results_LM_stat_svar;
     results.LM_pvalue.svar = results_LM_pvalue_svar;
+    if strcmp(estimand_type, 'ObsShock')
+        results.Hausman_stat.svar = results_Hausman_stat_svar;
+        results.Hausman_pvalue.svar = results_Hausman_pvalue_svar;
+    end
     if strcmp(estimand_type, 'IV')
         results.Granger_stat.svar = results_Granger_stat_svar;
         results.Granger_pvalue.svar = results_Granger_pvalue_svar;
@@ -341,6 +384,9 @@ end
 
 if any(strcmp(settings.est.methods_name, 'var_avg'))
     results.weight.var_avg = results_weight_var_avg;
+    if settings.est.average_store_submodel_irf == 1
+        results.submodel_irf.var_avg = results_submodel_irf_var_avg;
+    end
 end
 
 if any(strcmp(settings.est.methods_name, 'svar_iv'))

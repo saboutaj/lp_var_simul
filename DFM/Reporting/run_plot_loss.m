@@ -9,6 +9,7 @@ clear all
 close all
 
 addpath('Plotting_Functions')
+addpath(genpath(fullfile('..', 'Subroutines')))
 
 %% SETTINGS
 
@@ -22,6 +23,10 @@ exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shoc
 methods_iv_select        = [1 2 3 4 5 6 7];
 methods_obsshock_select  = [1 2 3 4 5 6];
 methods_recursive_select = [1 2 3 4 5 6];
+
+% select a subset of DGPs
+select_DGP = 0; % if select a subset of DGPs?
+select_DGP_fn = @(i_dgp, res) res.DF_model.VAR_largest_root(i_dgp) > median(res.DF_model.VAR_largest_root); % binary selection criteria
 
 % Apply shared settings
 settings_shared;
@@ -43,6 +48,12 @@ for nf=1:length(lags_folders) % For each folder...
             continue;
         end
         
+        % keep only the selected subset of DGPs
+        if select_DGP == 1
+            DGP_selected = arrayfun(@(x) select_DGP_fn(x,res), 1:res.settings.specifications.n_spec)'; % binary DGP selection label
+            res = combine_struct(res,[],[],DGP_selected);
+        end
+        
         %----------------------------------------------------------------
         % Compute Reporting Results
         %----------------------------------------------------------------
@@ -51,9 +62,9 @@ for nf=1:length(lags_folders) % For each folder...
         the_rms_irf  = sqrt(mean(the_true_irf.^2)); % Root average squared true IRF across horizons
         
         % Compute robust statistics
-        q1_idx = 2 + find(res.settings.simul.quantiles==0.25); % Index of first quartile
-        med_idx = 2 + find(res.settings.simul.quantiles==0.5); % Index of median
-        q3_idx = 2 + find(res.settings.simul.quantiles==0.75); % Index of third quartile
+        q1_idx = stat_index(0.25, res.settings); % Index of first quartile
+        med_idx = stat_index(0.5, res.settings); % Index of median
+        q3_idx = stat_index(0.75, res.settings); % Index of third quartile
         the_fields = fieldnames(res.results.irf);
         for ii=1:length(the_fields)
             res.results.medBIAS2.(the_fields{ii}) = (squeeze(res.results.irf.(the_fields{ii})(:,med_idx,:))-the_true_irf).^2; % Median bias squared
@@ -67,10 +78,12 @@ for nf=1:length(lags_folders) % For each folder...
         the_objects = {'BIAS2',    'VCE',   'medBIAS2',     'IQR2'}; % Objects to plot
         the_titles =  {'Bias',     'Std',   'MedBias',      'IQR'};  % Plot titles/file names
 
+        the_methods_index = cellfun(@(x) find(strcmp(res.settings.est.methods_name, x)), methods_fields{ne}); % index of each method
+
         for j=1:length(the_objects)
             
             the_result = sqrt(extract_struct(res.results.(the_objects{j})));
-            the_result = the_result(:,:,methods_select{ne});
+            the_result = the_result(:,:,the_methods_index);
             the_ranks = permute(tiedrank(permute(the_result, [3 1 2])), [2 3 1]); % Rank procedures from lowest to highest (break ties by averaging)
 
             % normalized losses

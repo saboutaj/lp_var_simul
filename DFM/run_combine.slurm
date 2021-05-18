@@ -7,7 +7,7 @@
 #SBATCH --time=1:00:00
 #SBATCH --array=1
 
-export SPEC_ID_ARRAY=1:30
+export SPEC_ID_ARRAY=1:2
 export DGP_TYPE=G
 export ESTIMAND_TYPE=ObsShock
 export LAG_TYPE=4
