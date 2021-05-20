@@ -13,7 +13,7 @@ DF_model.n_lags_uar = 2; % lag order of measurement error
 % selection of DGPs from encompassing model
 
 settings.specifications.random_select         = 1; % randomly select variables from DFM list?
-settings.specifications.random_n_spec         = 30; % number of random specifications
+settings.specifications.random_n_spec         = 100; % number of random specifications
 settings.specifications.random_n_var          = 5; % number of variables in each random specification
 settings.specifications.random_category_range = [1 20; 21 31; 32 76; 77 86; 87 94; 95 131; 132 141;...
                                                  142 159; 160 171; 172 180; 181 207]; % ranges for Stock-Watson variable categories (see their Table 1)
@@ -85,7 +85,7 @@ settings.est.CV_folds      = 5; % Number of folds used for cross validation
 
 % VAR model averaging
 
-settings.est.average_store_weight       = 2:21; % store model weights at which horizon
-settings.est.average_store_submodel_irf = 1; % store IRF of each submodel? Only store if want to comput oracle weight
+settings.est.average_store_weight       = [2, 5, 9, 15, 21]; % store model weights at which horizon
+settings.est.average_store_submodel_irf = 0; % store IRF of each submodel? Only store if want to comput oracle weight
 settings.est.average_max_lags           = 1; % include lags up to n_lags_max? otherwise up to estimated lags
 settings.est.average_options            = optimoptions('quadprog','Display','off');
