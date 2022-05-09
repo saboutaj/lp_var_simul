@@ -1,4 +1,4 @@
-function [Bc,ByCorrect,Sigma,Sxx] = VAR_CorrectBias(Y,nlags)
+function [Bc,ByCorrect,Sigma,Sxx] = VAR_CorrectBias(Y,nlags,i_MC, i_spec)
 % Auxiliary function for estimating bias-corrected VAR coefficients
 
 % first run least-squares VAR
@@ -63,6 +63,11 @@ else
         VAR_companion_form((nv+1):end, 1:(nv*(nlags-1))) = eye(nv*(nlags-1));
 
         % check if stationary
+        
+        % check nan
+        if isnan(eigs(VAR_companion_form,1))
+            disp(['NaN eigen. i_MC=', num2str(i_MC), ', i_spec=', num2str(i_spec)])
+        end
         
         if abs(eigs(VAR_companion_form,1)) < 1
             

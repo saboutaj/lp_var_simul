@@ -1,5 +1,5 @@
 function [IRF,n_lags_est,largest_root,LM_stat,LM_pvalue,Hausman_stat,Hausman_pvalue,Granger_stat,Granger_pvalue] ...
-    = SVAR_est(data_sim,settings,bias_corrected);
+    = SVAR_est(data_sim,settings,bias_corrected, i_MC, i_spec);
 % Function for estimating IRFs using least-squares VAR or bias-corrected VAR
 
 % preparations
@@ -12,7 +12,7 @@ run('Estimation_Setup'); % common setup for all estimation methods
 if bias_corrected == 0
     [Bc,By,Sigma,Sxx,Res,Beta] = VAR(Y,nlags); % no bias correction
 else
-    [Bc,By,Sigma] = VAR_CorrectBias(Y,nlags); % with bias correction
+    [Bc,By,Sigma] = VAR_CorrectBias(Y,nlags,i_MC, i_spec); % with bias correction
 end
 
 G = chol(Sigma, 'lower'); % Warning: correspond to matrix C in our paper
