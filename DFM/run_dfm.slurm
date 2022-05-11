@@ -20,4 +20,4 @@ module purge
 module load matlab/R2020b
 
 cd /home/dakel/lp_var_simul/DFM
-matlab -singleCompThread -nodisplay -nosplash -r "clear all; num_workers=$SLURM_CPUS_PER_TASK; spec_id=$SLURM_ARRAY_TASK_ID; dgp_type='$DGP_TYPE'; estimand_type='$ESTIMAND_TYPE'; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_dfm;"
+matlab -nodisplay -nosplash -r "clear all; num_workers=$SLURM_CPUS_PER_TASK; spec_id=$SLURM_ARRAY_TASK_ID; dgp_type='$DGP_TYPE'; estimand_type='$ESTIMAND_TYPE'; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_dfm;"
