@@ -18,7 +18,9 @@ tic;
 % Parallel computing object
 
 % num_workers = 1; % number of workers in a parallel pool
-poolobj = parpool('local', num_workers);
+pc = parcluster('local');
+pc.JobStorageLocation = '/tmp/';
+poolobj = parpool(pc, num_workers);
 clear num_workers;
 
 %% SET EXPERIMENT
@@ -401,6 +403,6 @@ save(fullfile(save_folder, strcat('DFM_', dgp_type, '_', estimand_type, '_', num
     'spec_id','dgp_type','estimand_type','lag_type','-v7.3'); % save results
 
 delete(poolobj);
-clear save_folder save_pre save_suff poolobj
+clear save_folder save_pre save_suff poolobj pc
 
 toc;
