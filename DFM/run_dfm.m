@@ -56,7 +56,7 @@ save_folder = fullfile(save_pre, strcat('lag', save_suff));
 
 % estimate DFM from dataset
 
-DFM_estimate = DFM_est(DF_model.n_fac, DF_model.n_lags_fac, DF_model.n_lags_uar);
+DFM_estimate = DFM_est(DF_model.n_fac, DF_model.n_lags_fac, DF_model.n_lags_uar, DF_model.reorder);
 
 % extract and store estimated DFM parameters
 
