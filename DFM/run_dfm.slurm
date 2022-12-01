@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=25
 #SBATCH --mem-per-cpu=4G
 #SBATCH --time=24:00:00
-#SBATCH --array=1
+#SBATCH --array=1-2
 
 export DGP_TYPE=G
 export ESTIMAND_TYPE=ObsShock
