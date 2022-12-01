@@ -11,6 +11,7 @@ export SPEC_ID_ARRAY=1:2
 export DGP_TYPE=G
 export ESTIMAND_TYPE=ObsShock
 export LAG_TYPE=4
+export MODE_TYPE=1
 export SAVE_PRE=/tigress/dakel/Results
 
 echo "My SLURM_ARRAY_JOB_ID is $SLURM_ARRAY_JOB_ID."
@@ -21,4 +22,4 @@ module purge
 module load matlab/R2020b
 
 cd /home/dakel/lp_var_simul/DFM/Subroutines
-matlab -nodisplay -nosplash -r "clear all; spec_id_array=$SPEC_ID_ARRAY; dgp_type='$DGP_TYPE'; estimand_type='$ESTIMAND_TYPE'; lag_type=$LAG_TYPE; save_pre='$SAVE_PRE'; run_combine;"
+matlab -nodisplay -nosplash -r "clear all; spec_id_array=$SPEC_ID_ARRAY; dgp_type='$DGP_TYPE'; estimand_type='$ESTIMAND_TYPE'; lag_type=$LAG_TYPE; mode_type=$MODE_TYPE; save_pre='$SAVE_PRE'; run_combine;"
