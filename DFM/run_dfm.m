@@ -45,7 +45,7 @@ run(fullfile('Settings', 'check_mode'));
 
 % Storage folder for results
 
-save_pre = 'Results'; % destination to store the results
+% save_pre = 'Results'; % destination to store the results
 
 if isnan(lag_type)
     save_suff = '_aic';

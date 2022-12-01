@@ -37,7 +37,7 @@ summ_option.summ_stat_name = [{'mean','std','winsorized_mean','winsorized_std'},
 
 % Storage folder for results
 
-save_pre = fullfile('..', 'Results');
+% save_pre = fullfile('..', 'Results');
 
 mode_list   = {'baseline', 'cumulative', 'persistent', 'persistent_BVAR_MN_prior' , 'small', 'salient'};
 save_mode_dir = mode_list{mode_type}; % set up directory for robustness-check modes
