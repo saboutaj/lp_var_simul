@@ -19,7 +19,7 @@ warning('off','MATLAB:structOnObject')
 %----------------------------------------------------------------
 
 % select robustness check mode
-mode_select    = 1; % options: 1 (baseline), 2 (cumulative IRF), 3 (persistent DGP), 4 (small sample), 5 (salient series)
+mode_select    = 1; % options: 1 (baseline), 2 (cumulative IRF), 3 (persistent DGP), 4 (persistent DGP with MN prior), 5 (small sample), 6 (salient series)
 
 % select lag length specifications
 lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags)
@@ -200,12 +200,12 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
             choice_raw = zeros(n_weight,max(res.settings.est.IRF_select));
             for i_weight = 1:n_weight
 
+                loss_all = weight_grid(i_weight) * the_BIAS2rel + (1-weight_grid(i_weight)) * the_VCErel;
+
                 if isempty(loss_quant) % mean loss across DGPs
-                    loss_all = weight_grid(i_weight) * the_BIAS2rel + (1-weight_grid(i_weight)) * the_VCErel;
                     loss_all = squeeze(mean(loss_all,2));
                 else % quantile loss across DGPs
-                    loss_all = weight_grid(i_weight) * squeeze(quantile(the_BIAS2rel,loss_quant,2)) + ...
-                        (1-weight_grid(i_weight)) * squeeze(quantile(the_VCErel,loss_quant,2));
+                    loss_all = squeeze(quantile(loss_all, loss_quant, 2));
                 end
 
                 loss_all(:,2:end) = loss_all(:,2:end) + sqrt(eps);

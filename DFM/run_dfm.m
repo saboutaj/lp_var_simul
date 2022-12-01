@@ -29,6 +29,10 @@ clear num_workers;
 % dgp_type = 'G'; % structural shock: either 'G' or 'MP'
 % estimand_type = 'ObsShock'; % structural estimand: either 'ObsShock', 'Recursive', or 'IV'
 % lag_type = 4; % No. of lags to impose in estimation, or NaN (= AIC)
+% mode_type = 1; % robustness check mode:
+               % 1 (baseline), 2 (cumulative IRF), 
+               % 3 (persistent DGP), 4 (persistent DGP with MN prior), 
+               % 5 (small sample), 6 (salient series)
 
 %% SETTINGS
 
@@ -37,16 +41,18 @@ clear num_workers;
 run(fullfile('Settings', 'shared'));
 run(fullfile('Settings', dgp_type));
 run(fullfile('Settings', estimand_type));
+run(fullfile('Settings', 'check_mode'));
 
 % Storage folder for results
 
-% save_pre = 'Results'; % destination to store the results
+save_pre = 'Results'; % destination to store the results
+
 if isnan(lag_type)
     save_suff = '_aic';
 else
     save_suff = num2str(lag_type);
 end
-save_folder = fullfile(save_pre, strcat('lag', save_suff));
+save_folder = fullfile(save_pre, save_mode_dir, strcat('lag', save_suff));
 
 %% ENCOMPASSING DFM MODEL
 
@@ -67,7 +73,9 @@ DF_model.Lambda        = DFM_estimate.Lambda;
 DF_model.delta         = DFM_estimate.delta;
 DF_model.sigma_v       = DFM_estimate.sigma_v;
 
-DF_model.variable_name = DFM_estimate.bplabvec_long;
+DF_model.variable_name_code = DFM_estimate.bpnamevec;
+DF_model.variable_name_short = DFM_estimate.bplabvec_short;
+DF_model.variable_name_long = DFM_estimate.bplabvec_long;
 DF_model.trans_code = DFM_estimate.bptcodevec; % transformation code
 % (1) y = x, (2) y = (1-L)x, (3) y = (1-L)^2 x,
 % (4) y = ln(x), (5) y = (1-L)ln(x), (6) y = (1-L)^2 ln(x)
@@ -408,9 +416,9 @@ clear results_* i_method thisMethod
 mkdir(save_folder);
 save(fullfile(save_folder, strcat('DFM_', dgp_type, '_', estimand_type, '_', num2str(spec_id))), ...
     'DFM_estimate','DF_model','settings','results',...
-    'spec_id','dgp_type','estimand_type','lag_type','-v7.3'); % save results
+    'spec_id','dgp_type','estimand_type','lag_type', 'mode_type', '-v7.3'); % save results
 
 delete(poolobj);
-clear save_folder save_pre save_suff poolobj pc
+clear save_folder save_pre save_mode_dir save_suff poolobj mode_list
 
 toc;
