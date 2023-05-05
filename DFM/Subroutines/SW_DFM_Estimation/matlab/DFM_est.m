@@ -100,6 +100,8 @@ DFM.bpnamevec = datain.bpnamevec; % variable name
 DFM.bplabvec_long = datain.bplabvec_long;
 DFM.bplabvec_short = datain.bplabvec_short;
 DFM.bptcodevec = datain.bptcodevec; % transformation code
+DFM.calvec = datain.calvec;
+DFM.bpinclcode = datain.bpinclcode;
 
 DFM.fac = fac_est_out.fac;
 DFM.fac_res = fac_est_out.varout.resid;
@@ -117,6 +119,7 @@ DFM.bpnamevec(reorder) = DFM.bpnamevec;
 DFM.bplabvec_long(reorder) = DFM.bplabvec_long;
 DFM.bplabvec_short(reorder) = DFM.bplabvec_short;
 DFM.bptcodevec(reorder) = DFM.bptcodevec;
+DFM.bpinclcode(reorder) = DFM.bpinclcode;
 
 DFM.r2(reorder) = DFM.r2;
 

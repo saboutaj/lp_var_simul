@@ -1,4 +1,4 @@
-function [y_data,shocks_data] = generate_data_SW(DFM,settings)
+function [y_data,shocks_data,F_mat] = generate_data_SW(DFM,settings)
 % Function for generating simulated data using calibrated DFM
 
 %%%%%%directly use Mark Watson's MATLAB script%%%%%%%%%
@@ -10,7 +10,7 @@ small = 1.0e-10;
 big = 1.0e+6;
 % rng(63876498);
 % Demeaning Parameters .. model for data when estimates
-i_demean = 1;  % 0 Do Nothing
+i_demean = 0;  % 0 Do Nothing
                % 1 Eliminate low-frequency by local Demeaning
                % 2 Eliminate low-frequency trend by full-sample demeaning;
 
