@@ -60,7 +60,6 @@ tmp1 = tmp(isnan(tmp)==0);
 tmp2 = (tmp1-mean(tmp1))/std(tmp1);
 datamat_m(isnan(tmp)==0,j) = tmp2; 
 
-
 % Form Panel Data set of transformed Data 
 bpdata=0; 
 for is = 1:ns_m; 
